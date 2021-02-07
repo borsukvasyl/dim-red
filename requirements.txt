@@ -7,3 +7,4 @@ sewar==0.4.4
 scipy==1.4.1
 opencv-contrib-python-headless==4.4.0.42
 numpy==1.19.4
+Pympler==0.9

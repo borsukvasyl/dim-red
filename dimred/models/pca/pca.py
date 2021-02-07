@@ -19,7 +19,8 @@ class PCA(BaseModel):
         for channel in cv2.split(img):
             pca = _PCA(n_components=self.num_components)
             compressed_channel = pca.fit_transform(channel)
-            result.append((compressed_channel, pca.components_, pca.mean_))
+            result.append(
+                (compressed_channel.astype("float16"), pca.components_.astype("float16"), pca.mean_.astype("float16")))
         return result
 
     def decompress(self, embedding: List[Tuple[np.ndarray, np.ndarray, np.ndarray]]) -> np.ndarray:
@@ -27,6 +28,4 @@ class PCA(BaseModel):
         Decode PCA decomposition into original image
         """
         channels = [compressed_channel @ components + mean for compressed_channel, components, mean in embedding]
-        img = cv2.merge(channels)
-        clipped_img = np.clip(img, 0, 255)
-        return clipped_img.astype(np.uint8)
+        return np.array(channels).transpose((1, 2, 0)).clip(0, 255).astype("uint8")
