@@ -20,7 +20,7 @@ class BaseModel(ABC):
             "psnr": psnr(original_image, decompressed_image),
             "original_image_size": asizeof.asizeof(original_image),
             "compressed_image_size": asizeof.asizeof(compressed_image),
-            "original_compressed_size_ratio": asizeof.asizeof(original_image) / asizeof.asizeof(compressed_image)
+            "compressed_orig_size_ratio":  asizeof.asizeof(compressed_image) / asizeof.asizeof(original_image)
         }
 
     @abstractmethod
