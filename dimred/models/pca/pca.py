@@ -2,12 +2,12 @@ from typing import List, Tuple
 
 import cv2
 import numpy as np
-from sklearn.decomposition import PCA as _PCA
+from sklearn.decomposition import PCA
 
 from dimred.models import BaseModel
 
 
-class PCA(BaseModel):
+class PCAModel(BaseModel):
     def __init__(self, num_components: int):
         self.num_components = num_components
 
@@ -17,7 +17,7 @@ class PCA(BaseModel):
         """
         result = list()
         for channel in cv2.split(img):
-            pca = _PCA(n_components=self.num_components)
+            pca = PCA(n_components=self.num_components)
             compressed_channel = pca.fit_transform(channel)
             result.append(
                 (compressed_channel.astype("float16"), pca.components_.astype("float16"), pca.mean_.astype("float16")))

@@ -1,7 +1,7 @@
 from dimred.models import BaseModel
 
 
-class AutoEncoder(BaseModel):
+class AutoEncoderModel(BaseModel):
     def compress(self, img):
         pass
 

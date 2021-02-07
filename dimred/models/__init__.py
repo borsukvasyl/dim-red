@@ -1,7 +1,7 @@
 from .base_model import BaseModel
-from .autoencoder.autoencoder import AutoEncoder
-from .kmeans.kmeans import KMeans
+from .autoencoder.autoencoder import AutoEncoderModel
+from .kmeans.kmeans import KMeansModel
 from .svd.svd import SVDModel
-from .pca.pca import PCA
+from .pca.pca import PCAModel
 
-__all__ = ["BaseModel", "AutoEncoder", "SVDModel", "KMeans", "PCA"]
+__all__ = ["BaseModel", "AutoEncoderModel", "SVDModel", "KMeansModel", "PCAModel"]
