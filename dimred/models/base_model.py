@@ -2,22 +2,24 @@ from abc import ABC, abstractmethod
 from typing import Dict, Any, Optional
 
 import numpy as np
+from pympler import asizeof
 from sewar.full_ref import mse, ssim, vifp, psnrb, psnr
 
 from dimred.utils import load_yaml, get_relative_path
 
 
 class BaseModel(ABC):
-    def get_metrics(self, original_image: np.ndarray, compressed_image: Optional[np.ndarray] = None)\
-            -> Dict[str, float]:
-        if compressed_image is None:
-            compressed_image = self.decompress(self.compress(original_image))
+    def get_metrics(self, original_image: np.ndarray) -> Dict[str, Any]:
+        compressed_image = self.compress(original_image)
+        decompressed_image = self.decompress(compressed_image)
         return {
-            "mse": mse(original_image, compressed_image),
-            "ssim": ssim(original_image, compressed_image)[0],
-            "vif-p": vifp(original_image, compressed_image),
-            "psnr-b": psnrb(original_image, compressed_image),
-            "psnr": psnr(original_image, compressed_image)
+            "mse": mse(original_image, decompressed_image),
+            "ssim": ssim(original_image, decompressed_image)[0],
+            "vif-p": vifp(original_image, decompressed_image),
+            "psnr-b": psnrb(original_image, decompressed_image),
+            "psnr": psnr(original_image, decompressed_image),
+            "restored_image": decompressed_image,
+            "saved_memory_ratio": asizeof.asizeof(compressed_image) / asizeof.asizeof(original_image)
         }
 
     @abstractmethod
