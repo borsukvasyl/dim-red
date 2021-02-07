@@ -18,7 +18,9 @@ class BaseModel(ABC):
             "vif-p": vifp(original_image, decompressed_image),
             "psnr-b": psnrb(original_image, decompressed_image),
             "psnr": psnr(original_image, decompressed_image),
-            "saved_memory_ratio": asizeof.asizeof(compressed_image) / asizeof.asizeof(original_image)
+            "original_image_size": asizeof.asizeof(original_image),
+            "compressed_image_size": asizeof.asizeof(compressed_image),
+            "original_compressed_size_ratio": asizeof.asizeof(original_image) / asizeof.asizeof(compressed_image)
         }
 
     @abstractmethod
