@@ -9,7 +9,7 @@ from dimred.utils import load_yaml, get_relative_path
 
 
 class BaseModel(ABC):
-    def get_metrics(self, original_image: np.ndarray) -> Dict[str, Any]:
+    def get_metrics(self, original_image: np.ndarray) -> Dict[str, float]:
         compressed_image = self.compress(original_image)
         decompressed_image = self.decompress(compressed_image)
         return {
@@ -18,7 +18,6 @@ class BaseModel(ABC):
             "vif-p": vifp(original_image, decompressed_image),
             "psnr-b": psnrb(original_image, decompressed_image),
             "psnr": psnr(original_image, decompressed_image),
-            "restored_image": decompressed_image,
             "saved_memory_ratio": asizeof.asizeof(compressed_image) / asizeof.asizeof(original_image)
         }
 
