@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Tuple
 
 import numpy as np
-import torch as T
+import torch
 from skimage.io import imread
 from skimage.transform import resize
 from torch.utils.data import Dataset
@@ -20,7 +20,7 @@ class ImageDataset(Dataset):
         img = resize(img, (400, 400), anti_aliasing=True)/ 255.0
 
         img = np.transpose(img, (2, 0, 1))
-        img = T.from_numpy(img).float()
+        img = torch.from_numpy(img).float()
 
         return img, path
 
