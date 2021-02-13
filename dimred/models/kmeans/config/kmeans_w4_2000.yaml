@@ -1,0 +1,2 @@
+window_size: 4
+model_path: models/kmeans_w4_2000.joblib
