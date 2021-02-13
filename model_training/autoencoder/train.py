@@ -22,15 +22,12 @@ class ImageDataset(Dataset):
         self.files = glob.glob(os.path.join(root, "*.jpg"))
 
     def __getitem__(self, idx: int) -> Tuple[torch.Tensor, str]:
-        path = str(self.files[idx % len(self.files)])
-
+        path = self.files[idx % len(self.files)]
         img = imread(path)
         img = resize(img, (400, 400), anti_aliasing=True) / 255.0
-
         img = np.transpose(img, (2, 0, 1))
         img = torch.from_numpy(img).float()
-
-        return img, path
+        return img
 
     def __len__(self):
         return len(self.files)
@@ -60,8 +57,8 @@ def main(images_path: str, model_name: str):
     loss_criterion = nn.MSELoss()
     pbar = tqdm(total=config.model_config.epochs)
     for epoch in range(config.model_config.epochs):
-        for data in dataloader:
-            img, _ = data
+        for img in dataloader:
+            img.cuda() if config.device == "cuda" else img.cpu()
             output = autoencoder(img)
             loss = loss_criterion(output, img)
             optimizer.zero_grad()
