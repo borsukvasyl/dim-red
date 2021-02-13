@@ -38,7 +38,7 @@ def get_config():
     config.device = "cuda" if torch.cuda.is_available() else "cpu"
     config.model_config = EasyDict()
     config.model_config.epochs = 10
-    config.model_config.batch_size = 128
+    config.model_config.batch_size = 8
     config.model_config.weight_decay = 1e-5
     config.model_config.learning_rate = 10e-4
     return config
@@ -58,7 +58,7 @@ def main(images_path: str, model_name: str):
     pbar = tqdm(total=config.model_config.epochs)
     for epoch in range(config.model_config.epochs):
         for img in dataloader:
-            img.cuda() if config.device == "cuda" else img.cpu()
+            img = img.cuda() if config.device == "cuda" else img.cpu()
             output = autoencoder(img)
             loss = loss_criterion(output, img)
             optimizer.zero_grad()
