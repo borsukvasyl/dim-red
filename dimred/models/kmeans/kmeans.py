@@ -29,7 +29,7 @@ def unpatch_image(patches: np.ndarray, window_size: int, padding_h: int, padding
     patches = patches.reshape(rows, cols, 1, 3, window_size, window_size)
     patches = np.transpose(patches, (0, 1, 2, 4, 5, 3))
     img = unpatchify(patches, (h, w, 3))
-    return img
+    return img[:img_shape[0], :img_shape[1]]
 
 
 class KMeansModel(BaseModel):
@@ -40,6 +40,7 @@ class KMeansModel(BaseModel):
     def compress(self, img):
         patches, padding_h, padding_w = patch_image(img, self.window_size)
         embedding = self.kmeans.predict(patches)
+        embedding = embedding.astype(np.int16)
         return embedding, padding_h, padding_w, img.shape
 
     def decompress(self, embedding):
@@ -47,4 +48,4 @@ class KMeansModel(BaseModel):
         clusters = self.kmeans.cluster_centers_
         patches = clusters[embedding]
         img = unpatch_image(patches, self.window_size, padding_h, padding_w, img_shape)
-        return img
+        return img.astype(np.uint8)
