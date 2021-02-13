@@ -1,8 +1,9 @@
 import numpy as np
 from patchify import patchify, unpatchify
-from sklearn.cluster import KMeans
+import joblib
 
 from dimred.models import BaseModel
+from dimred.utils import get_relative_path
 
 
 def calculate_padding(img: np.ndarray, window: int):
@@ -32,11 +33,9 @@ def unpatch_image(patches: np.ndarray, window_size: int, padding_h: int, padding
 
 
 class KMeansModel(BaseModel):
-    def __init__(self, window_size: int, train_img: np.ndarray, n_clusters: int = 1000):
+    def __init__(self, window_size: int, model_path: str):
         self.window_size = window_size
-
-        patches, padding_h, padding_w = patch_image(train_img, self.window_size)
-        self.kmeans = KMeans(n_clusters=n_clusters).fit(patches)
+        self.kmeans = joblib.load(get_relative_path(model_path, __file__))
 
     def compress(self, img):
         patches, padding_h, padding_w = patch_image(img, self.window_size)
