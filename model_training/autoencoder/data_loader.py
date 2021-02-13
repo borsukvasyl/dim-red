@@ -13,11 +13,11 @@ class ImageDataset(Dataset):
         self.files = sorted(Path(root).iterdir())
         self.files = [file for file in self.files if file.suffix == '.jpg']
 
-    def __getitem__(self, idx: int) -> Tuple[T.Tensor, str]:
+    def __getitem__(self, idx: int) -> Tuple[torch.Tensor, str]:
         path = str(self.files[idx % len(self.files)])
 
         img = imread(path)
-        img = resize(img, (400, 400), anti_aliasing=True)/ 255.0
+        img = resize(img, (400, 400), anti_aliasing=True) / 255.0
 
         img = np.transpose(img, (2, 0, 1))
         img = torch.from_numpy(img).float()
