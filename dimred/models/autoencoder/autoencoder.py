@@ -217,4 +217,4 @@ class AutoEncoderModel(BaseModel, nn.Module):
         """
         with torch.no_grad():
             decoded = self._decode(embedding)
-        return (decoded[0] * 255).to_numpy()
+        return (decoded[0] * 255).numpy()
