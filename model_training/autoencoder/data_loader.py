@@ -1,5 +1,6 @@
-from pathlib import Path
 from typing import Tuple
+import os
+import glob
 
 import numpy as np
 import torch
@@ -10,8 +11,7 @@ from torch.utils.data import Dataset
 
 class ImageDataset(Dataset):
     def __init__(self, root: str):
-        self.files = sorted(Path(root).iterdir())
-        self.files = [file for file in self.files if file.suffix == '.jpg']
+        self.files = glob.glob(os.path.join(root, "*.jpg"))
 
     def __getitem__(self, idx: int) -> Tuple[torch.Tensor, str]:
         path = str(self.files[idx % len(self.files)])

@@ -51,6 +51,7 @@ def main(images_path: str, model_path: str):
 
         print(f"epoch {epoch + 1}/{config.model_config.epochs}, loss:{loss.item()}")
         torch.save(autoencoder.state_dict(), Path(model_path) / f"checkpoint_model_{epoch}.pth")
+
     torch.save(autoencoder.state_dict(), Path(model_path) / "autoencoder.pth")
 
 
