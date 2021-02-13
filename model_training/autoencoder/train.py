@@ -1,15 +1,40 @@
-from pathlib import Path
+import glob
+import os
+from typing import Tuple
 
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
 from easydict import EasyDict
 from fire import Fire
+from skimage.io import imread
+from skimage.transform import resize
 from torch.autograd import Variable
 from torch.utils.data import DataLoader
+from torch.utils.data import Dataset
+from tqdm import tqdm
 
 from dimred.models.autoencoder.autoencoder import AutoEncoderModel
-from model_training.autoencoder.data_loader import ImageDataset
+
+
+class ImageDataset(Dataset):
+    def __init__(self, root: str):
+        self.files = glob.glob(os.path.join(root, "*.jpg"))
+
+    def __getitem__(self, idx: int) -> Tuple[torch.Tensor, str]:
+        path = str(self.files[idx % len(self.files)])
+
+        img = imread(path)
+        img = resize(img, (400, 400), anti_aliasing=True) / 255.0
+
+        img = np.transpose(img, (2, 0, 1))
+        img = torch.from_numpy(img).float()
+
+        return img, path
+
+    def __len__(self):
+        return len(self.files)
 
 
 def get_config():
@@ -23,7 +48,7 @@ def get_config():
     return config
 
 
-def main(images_path: str, model_path: str):
+def main(images_path: str, model_name: str):
     config = get_config()
     dataloader = DataLoader(
         dataset=ImageDataset(images_path),
@@ -37,6 +62,7 @@ def main(images_path: str, model_path: str):
     optimizer = optim.Adam(autoencoder.parameters(), lr=config.model_config.learning_rate,
                            weight_decay=config.model_config.weight_decay)
     loss_criterion = nn.MSELoss()
+    pbar = tqdm(total=config.model_config.epochs)
     for epoch in range(config.model_config.epochs):
         for data in dataloader:
             img, _ = data
@@ -49,10 +75,9 @@ def main(images_path: str, model_path: str):
             loss.backward()
             optimizer.step()
 
-        print(f"epoch {epoch + 1}/{config.model_config.epochs}, loss:{loss.item()}")
-        torch.save(autoencoder.state_dict(), Path(model_path) / f"checkpoint_model_{epoch}.pth")
-
-    torch.save(autoencoder.state_dict(), Path(model_path) / "autoencoder.pth")
+        pbar.set_description(f"epoch {epoch + 1}/{config.model_config.epochs}, loss:{loss.item()}")
+        pbar.update()
+    torch.save(autoencoder.state_dict(), f"{model_name}.pth")
 
 
 if __name__ == "__main__":
