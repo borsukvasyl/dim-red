@@ -10,7 +10,6 @@ from easydict import EasyDict
 from fire import Fire
 from skimage.io import imread
 from skimage.transform import resize
-from torch.autograd import Variable
 from torch.utils.data import DataLoader
 from torch.utils.data import Dataset
 from tqdm import tqdm
@@ -54,11 +53,8 @@ def main(images_path: str, model_name: str):
         dataset=ImageDataset(images_path),
         batch_size=config.model_config.batch_size,
     )
-
-    if config.device == "cuda":
-        autoencoder = AutoEncoderModel().cuda()
-    else:
-        autoencoder = AutoEncoderModel().cpu()
+    autoencoder = AutoEncoderModel(device=config.device)
+    autoencoder.train()
     optimizer = optim.Adam(autoencoder.parameters(), lr=config.model_config.learning_rate,
                            weight_decay=config.model_config.weight_decay)
     loss_criterion = nn.MSELoss()
@@ -66,11 +62,8 @@ def main(images_path: str, model_name: str):
     for epoch in range(config.model_config.epochs):
         for data in dataloader:
             img, _ = data
-            img = Variable(img).cpu()
-
             output = autoencoder(img)
             loss = loss_criterion(output, img)
-
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()

@@ -7,15 +7,19 @@ from dimred.models import BaseModel
 
 
 class AutoEncoderModel(BaseModel, nn.Module):
-    def __init__(self, model_path=None):
+    def __init__(self, model_path=None, device="cuda"):
         super().__init__()
         self.encoded = None
-        self._model()
+        self.create_model()
+        self.load_model(model_path, device)
+
+    def load_model(self, model_path, device):
         if model_path:
             self.load_state_dict(torch.load(model_path))
             self.eval()
+        self.cuda() if device == "cuda" else self.cpu()
 
-    def _model(self):
+    def create_model(self):
         # ENCODER
         # output shape 64x64x64
         self.e_conv_1 = nn.Sequential(
