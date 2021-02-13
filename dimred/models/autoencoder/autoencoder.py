@@ -1,6 +1,6 @@
-import torch as T
-import torch.nn as nn
 import numpy as np
+import torch
+import torch.nn as nn
 from skimage.transform import resize
 
 from dimred.models import BaseModel
@@ -8,12 +8,11 @@ from dimred.models import BaseModel
 
 class AutoEncoderModel(BaseModel, nn.Module):
     def __init__(self, model_path=None):
-
         super().__init__()
         self.encoded = None
         self._model()
         if model_path:
-            self.load_state_dict(T.load(model_path))
+            self.load_state_dict(torch.load(model_path))
             self.eval()
 
     def _model(self):
@@ -203,7 +202,7 @@ class AutoEncoderModel(BaseModel, nn.Module):
         img = resize(img, (400, 400), anti_aliasing=True) / 255.0
         img = np.transpose(img, (2, 0, 1))
         img = img.reshape((1, *img.shape))
-        img = T.from_numpy(img).float()
+        img = torch.from_numpy(img).float()
         return self._encode(img)
 
     def decompress(self, embedding: np.ndarray) -> np.ndarray:
@@ -211,4 +210,4 @@ class AutoEncoderModel(BaseModel, nn.Module):
         Take embedding vector as input and return reconstructed image
         """
         decoded = self._decode(embedding)
-        return decoded[0]*255
+        return decoded[0] * 255
