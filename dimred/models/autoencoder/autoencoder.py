@@ -207,11 +207,14 @@ class AutoEncoderModel(BaseModel, nn.Module):
         img = np.transpose(img, (2, 0, 1))
         img = img.reshape((1, *img.shape))
         img = torch.from_numpy(img).float()
-        return self._encode(img)
+        with torch.no_grad():
+            encoded = self._encode(img)
+        return encoded
 
     def decompress(self, embedding: np.ndarray) -> np.ndarray:
         """
         Take embedding vector as input and return reconstructed image
         """
-        decoded = self._decode(embedding)
-        return decoded[0] * 255
+        with torch.no_grad():
+            decoded = self._decode(embedding)
+        return (decoded[0] * 255).to_numpy()
