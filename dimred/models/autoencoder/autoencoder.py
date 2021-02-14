@@ -2,6 +2,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 from skimage.transform import resize
+import cv2
 
 from dimred.models import BaseModel
 
@@ -79,7 +80,17 @@ class AutoEncoderModel(BaseModel, nn.Module):
         self.e_conv_3 = nn.Sequential(
             nn.Conv2d(
                 in_channels=128,
-                out_channels=32,
+                out_channels=64,
+                kernel_size=(5, 5),
+                stride=(1, 1),
+                padding=(2, 2),
+            ),
+        )
+
+        self.e_conv_4 = nn.Sequential(
+            nn.Conv2d(
+                in_channels=64,
+                out_channels=16,
                 kernel_size=(5, 5),
                 stride=(1, 1),
                 padding=(2, 2),
@@ -88,6 +99,17 @@ class AutoEncoderModel(BaseModel, nn.Module):
         )
 
         # DECODER
+        self.d_block_0 = nn.Sequential(
+            nn.ZeroPad2d((1, 1, 1, 1)),
+            nn.Conv2d(
+                in_channels=16, out_channels=32, kernel_size=(3, 3), stride=(1, 1)
+            ),
+            nn.LeakyReLU(),
+            nn.ZeroPad2d((1, 1, 1, 1)),
+            nn.Conv2d(
+                in_channels=32, out_channels=32, kernel_size=(3, 3), stride=(1, 1)
+            ),
+        )
 
         # output shape  128x64x64
         self.d_up_conv_1 = nn.Sequential(
@@ -162,7 +184,6 @@ class AutoEncoderModel(BaseModel, nn.Module):
             nn.Conv2d(
                 in_channels=16, out_channels=3, kernel_size=(3, 3), stride=(1, 1)
             ),
-            nn.Tanh(),
         )
 
     def _encode(self, img):
@@ -174,7 +195,7 @@ class AutoEncoderModel(BaseModel, nn.Module):
         eblock1 = self.e_block_1(ec2) + ec2
         eblock2 = self.e_block_2(eblock1) + eblock1
         eblock3 = self.e_block_3(eblock2) + eblock2
-        ec3 = self.e_conv_3(eblock3)  # in [-1, 1] from tanh activation
+        ec3 = self.e_conv_4(self.e_conv_3(eblock3))  # in [-1, 1] from tanh activation
 
         # encoded tensor
         self.encoded = 0.5 * (ec3 + 1)  # (-1|1) -> (0|1)
@@ -186,14 +207,13 @@ class AutoEncoderModel(BaseModel, nn.Module):
         """
         y = embedding * 2.0 - 1  # transform from zero-one range to minus one - one
 
-        uc1 = self.d_up_conv_1(y)
+        uc1 = self.d_up_conv_1(self.d_block_0(y))
         dblock1 = self.d_block_1(uc1) + uc1
         dblock2 = self.d_block_2(dblock1) + dblock1
         dblock3 = self.d_block_3(dblock2) + dblock2
         uc2 = self.d_up_conv_2(dblock3)
         dec = self.d_up_conv_3(uc2)
-
-        return dec
+        return torch.sigmoid(dec)
 
     def forward(self, img):
         embedding = self._encode(img)
@@ -203,18 +223,20 @@ class AutoEncoderModel(BaseModel, nn.Module):
         """
         Take single image as input and return embedding
         """
-        img = resize(img, (400, 400), anti_aliasing=True) / 255.0
+        img = img / 255.
         img = np.transpose(img, (2, 0, 1))
         img = img.reshape((1, *img.shape))
         img = torch.from_numpy(img).float()
         with torch.no_grad():
             encoded = self._encode(img)
-        return encoded
+        return encoded.numpy().astype("float16")
 
     def decompress(self, embedding: np.ndarray) -> np.ndarray:
         """
         Take embedding vector as input and return reconstructed image
         """
+        embedding = torch.from_numpy(embedding.astype("float32"))
         with torch.no_grad():
             decoded = self._decode(embedding)
-        return (decoded[0] * 255).numpy()
+        decoded = np.transpose((decoded[0] * 255).numpy(), (1, 2, 0)).astype("uint8")
+        return decoded

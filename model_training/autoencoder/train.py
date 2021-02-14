@@ -1,6 +1,6 @@
 import glob
-import os
 from typing import Tuple
+import os
 
 import numpy as np
 import torch
@@ -19,12 +19,12 @@ from dimred.models.autoencoder.autoencoder import AutoEncoderModel
 
 class ImageDataset(Dataset):
     def __init__(self, root: str):
-        self.files = glob.glob(os.path.join(root, "*.jpg"))
+        self.files = sorted(glob.glob(os.path.join(root, "*.jpg")))
 
     def __getitem__(self, idx: int) -> Tuple[torch.Tensor, str]:
         path = self.files[idx % len(self.files)]
         img = imread(path)
-        img = resize(img, (400, 400), anti_aliasing=True) / 255.0
+        img = resize(img, (224, 224), anti_aliasing=True)
         img = np.transpose(img, (2, 0, 1))
         img = torch.from_numpy(img).float()
         return img
@@ -37,10 +37,10 @@ def get_config():
     config = EasyDict()
     config.device = "cuda" if torch.cuda.is_available() else "cpu"
     config.model_config = EasyDict()
-    config.model_config.epochs = 10
-    config.model_config.batch_size = 8
-    config.model_config.weight_decay = 1e-5
-    config.model_config.learning_rate = 10e-4
+    config.model_config.epochs = 200
+    config.model_config.batch_size = 24
+    config.model_config.weight_decay = 0.01
+    config.model_config.learning_rate = 0.0001
     return config
 
 
@@ -50,18 +50,18 @@ def main(images_path: str, model_name: str):
         dataset=ImageDataset(images_path),
         batch_size=config.model_config.batch_size,
     )
-    autoencoder = AutoEncoderModel(device=config.device)
-    autoencoder.train()
-    optimizer = optim.Adam(autoencoder.parameters(), lr=config.model_config.learning_rate,
-                           weight_decay=config.model_config.weight_decay)
-    loss_criterion = nn.MSELoss()
+    autoencoder = AutoEncoderModel()
+    autoencoder.cuda().eval()
+    optimizer = optim.AdamW(autoencoder.parameters(), lr=config.model_config.learning_rate,
+                            weight_decay=config.model_config.weight_decay)
+    loss_criterion = nn.BCELoss()
     pbar = tqdm(total=config.model_config.epochs)
     for epoch in range(config.model_config.epochs):
         for img in dataloader:
+            optimizer.zero_grad()
             img = img.cuda() if config.device == "cuda" else img.cpu()
             output = autoencoder(img)
             loss = loss_criterion(output, img)
-            optimizer.zero_grad()
             loss.backward()
             optimizer.step()
 
