@@ -12,9 +12,8 @@ from dimred.models import BaseModel
 class AutoEncoderModel(BaseModel, nn.Module):
     def __init__(self, model_path=None, device="cuda"):
         super().__init__()
-        self.encoded = None
-        self.create_model()
         self.device = device
+        self.create_model()
         self.load_model(model_path)
 
     def load_model(self, model_path,):
@@ -201,8 +200,8 @@ class AutoEncoderModel(BaseModel, nn.Module):
         ec3 = self.e_conv_4(self.e_conv_3(eblock3))  # in [-1, 1] from tanh activation
 
         # encoded tensor
-        self.encoded = 0.5 * (ec3 + 1)  # (-1|1) -> (0|1)
-        return self.encoded
+        encoded = 0.5 * (ec3 + 1)  # (-1|1) -> (0|1)
+        return encoded
 
     def _decode(self, embedding):
         """
