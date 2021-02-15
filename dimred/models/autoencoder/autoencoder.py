@@ -1,12 +1,12 @@
 from typing import Tuple
+
+import cv2
 import numpy as np
 import torch
 import torch.nn as nn
-import cv2
 
-
-from dimred.utils import get_relative_path
 from dimred.models import BaseModel
+from dimred.utils import get_relative_path
 
 
 class AutoEncoderModel(BaseModel, nn.Module):
@@ -16,11 +16,11 @@ class AutoEncoderModel(BaseModel, nn.Module):
         self.create_model()
         self.load_model(model_path)
 
-    def load_model(self, model_path,):
+    def load_model(self, model_path, ):
         if model_path:
-            self.load_state_dict(torch.load(get_relative_path(model_path, __file__)))
+            self.load_state_dict(
+                torch.load(get_relative_path(model_path, __file__), map_location=torch.device(self.device)))
             self.eval()
-        self.cuda() if self.device == "cuda" else self.cpu()
 
     def create_model(self):
         # ENCODER
