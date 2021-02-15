@@ -1,9 +1,11 @@
+from typing import Tuple
 import numpy as np
 import torch
 import torch.nn as nn
-from skimage.transform import resize
 import cv2
 
+
+from dimred.utils import get_relative_path
 from dimred.models import BaseModel
 
 
@@ -12,13 +14,14 @@ class AutoEncoderModel(BaseModel, nn.Module):
         super().__init__()
         self.encoded = None
         self.create_model()
-        self.load_model(model_path, device)
+        self.device = device
+        self.load_model(model_path)
 
-    def load_model(self, model_path, device):
+    def load_model(self, model_path,):
         if model_path:
-            self.load_state_dict(torch.load(model_path))
+            self.load_state_dict(torch.load(get_relative_path(model_path, __file__)))
             self.eval()
-        self.cuda() if device == "cuda" else self.cpu()
+        self.cuda() if self.device == "cuda" else self.cpu()
 
     def create_model(self):
         # ENCODER
@@ -219,24 +222,28 @@ class AutoEncoderModel(BaseModel, nn.Module):
         embedding = self._encode(img)
         return self._decode(embedding)
 
-    def compress(self, img: np.ndarray) -> np.ndarray:
+    def compress(self, img: np.ndarray) -> Tuple[np.ndarray, Tuple[int, int]]:
         """
         Take single image as input and return embedding
         """
+        original_shape = tuple(img.shape[:2])
         img = img / 255.
         img = np.transpose(img, (2, 0, 1))
         img = img.reshape((1, *img.shape))
         img = torch.from_numpy(img).float()
+        img = img.to(self.device)
         with torch.no_grad():
             encoded = self._encode(img)
-        return encoded.numpy().astype("float16")
+        return encoded.numpy().astype("float16"), original_shape
 
-    def decompress(self, embedding: np.ndarray) -> np.ndarray:
+    def decompress(self, embedding: Tuple[np.ndarray, Tuple[int, int]]) -> np.ndarray:
         """
         Take embedding vector as input and return reconstructed image
         """
-        embedding = torch.from_numpy(embedding.astype("float32"))
+        encoded, (height, width) = embedding
+        encoded = torch.from_numpy(encoded.astype("float32"))
         with torch.no_grad():
-            decoded = self._decode(embedding)
+            decoded = self._decode(encoded)
         decoded = np.transpose((decoded[0] * 255).numpy(), (1, 2, 0)).astype("uint8")
+        decoded = cv2.resize(decoded, (width, height))
         return decoded
